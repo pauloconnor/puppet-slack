@@ -1,3 +1,4 @@
+# rubocop:disable Style/HashSyntax
 source ENV['GEM_SOURCE'] || 'https://rubygems.org'
 
 group :development, :test do
@@ -24,4 +25,5 @@ else
   gem 'puppet', ENV['PUPPET_GEM_VERSION'], require: false
 end
 
+# rubocop:enable Style/HashSyntax
 # vim:ft=ruby

@@ -1,10 +1,12 @@
-require 'rubygems'
 require 'English'
+require 'rubygems'
+require 'rake'
+require 'rspec/core/rake_task'
 
 require 'puppet-lint/tasks/puppet-lint'
 PuppetLint.configuration.fail_on_warnings
 
-task default: [:validate_templates, :validate_manifests, :rubocop, :lint]
+task default: [:validate_templates, :validate_manifests, :rubocop, :spec, :lint]
 
 desc 'Validate ERB templates.'
 task :validate_templates do
@@ -23,6 +25,11 @@ end
 desc 'Style-check Ruby files with RuboCop.'
 task rubocop: [:get_rubocop] do
   system 'rubocop .'
+end
+
+RSpec::Core::RakeTask.new(:spec) do |t|
+  t.pattern = 'spec/**/*_spec.rb'
+  t.rspec_opts = '--format documentation --color'
 end
 
 task :get_rubocop do

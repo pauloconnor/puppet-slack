@@ -1,33 +1,50 @@
 require 'puppet'
 require 'yaml'
 require 'faraday'
+require 'json'
 
-Puppet::Reports.register_report(:slack) do
-  desc 'Send notification of puppet run reports to Slack Messaging.'
-
-  @configfile = File.join(File.dirname(Puppet.settings[:config]), 'slack.yaml')
-  unless File.readable?(@configfile)
-    msg = "Slack report config file #{@configfile} is not readable."
-    fail(Puppet::ParseError, msg)
+# Helper class to handle interacting with the Slack API.
+class SlackReporter
+  def initialize
+    configfile = File.join(Puppet.settings[:confdir], 'slack.yaml')
+    unless File.readable?(configfile)
+      msg = "Slack report config file #{@configfile} is not readable."
+      fail(Puppet::ParseError, msg)
+    end
+    @config = YAML.load_file(configfile)
   end
-  @config = YAML.load_file(@configfile)
-  SLACK_TOKEN = @config[:slack_token]
-  SLACK_CHANNEL = @config[:slack_channel]
-  SLACK_BOTNAME = @config[:slack_botname]
-  SLACK_ICONURL = @config[:slack_iconurl]
-  SLACK_URL = @config[:slack_url]
 
-  def process
-    return unless status == 'failed' || status == 'changed'
-    Puppet.debug "Sending status for #{host} to Slack."
+  def build_json_request(text)
+    request = {
+      'channel' => @config[:slack_channel],
+      'username' => @config[:slack_botname],
+      'icon_url' => @config[:slack_iconurl],
+      'text' => text
+    }
+    JSON.generate(request)
+  end
+
+  def report(message)
     conn = Faraday.new(url: "#{SLACK_URL}") do |faraday|
       faraday.request :url_encoded
       faraday.adapter Faraday.default_adapter
     end
 
     conn.post do |req|
-      req.url "/services/hooks/incoming-webhook?token=#{SLACK_TOKEN}"
-      req.body = "{\"channel\":\"#{SLACK_CHANNEL}\",\"username\":\"#{SLACK_BOTNAME}\", \"icon_url\":\"#{SLACK_ICONURL}\",\"text\":\"> Puppet run for #{host} `#{status}` at #{Time.now.asctime}\"}"
+      req.url "/services/hooks/incoming-webhook?token=#{@config[:slack_token]}"
+      req.body = build_json_request(message)
     end
+  end
+end
+
+Puppet::Reports.register_report(:slack) do
+  desc 'Send notification of puppet run reports to Slack Messaging.'
+
+  def process
+    return unless status == 'failed' || status == 'changed'
+    Puppet.debug "Sending status for #{host} to Slack."
+    reporter = SlackReporter.new
+    message = "Puppet run for #{host} `#{status}` at #{Time.now.asctime}"
+    reporter.report(message)
   end
 end

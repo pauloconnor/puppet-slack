@@ -14,15 +14,15 @@ group :development, :test do
 end
 
 if ENV['FACTER_GEM_VERSION'].nil?
-  gem 'facter', require: false
+  gem 'facter', :require => false
 else
-  gem 'facter', ENV['FACTER_GEM_VERSION'], require: false
+  gem 'facter', ENV['FACTER_GEM_VERSION'], :require => false
 end
 
 if ENV['PUPPET_GEM_VERSION'].nil?
-  gem 'puppet', require: false
+  gem 'puppet', :require => false
 else
-  gem 'puppet', ENV['PUPPET_GEM_VERSION'], require: false
+    gem 'puppet', ENV['PUPPET_GEM_VERSION'], :require => false
 end
 
 # rubocop:enable Style/HashSyntax

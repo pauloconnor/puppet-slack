@@ -7,7 +7,8 @@ Puppet::Reports.register_report(:slack) do
 
   @configfile = File.join(File.dirname(Puppet.settings[:config]), 'slack.yaml')
   unless File.readable?(@configfile)
-    fail(Puppet::ParseError, "Slack report config file #{@configfile} not readable.")
+    msg = "Slack report config file #{@configfile} is not readable."
+    fail(Puppet::ParseError, msg)
   end
   @config = YAML.load_file(@configfile)
   SLACK_TOKEN = @config[:slack_token]

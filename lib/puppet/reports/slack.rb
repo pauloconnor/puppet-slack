@@ -25,7 +25,7 @@ class SlackReporter
   end
 
   def report(message)
-    conn = Faraday.new(url: "#{SLACK_URL}") do |faraday|
+    conn = Faraday.new(url: "#{@config[:slack_url]}") do |faraday|
       faraday.request :url_encoded
       faraday.adapter Faraday.default_adapter
     end

@@ -5,6 +5,7 @@ require 'rspec/core/rake_task'
 
 require 'puppet-lint/tasks/puppet-lint'
 PuppetLint.configuration.fail_on_warnings
+PuppetLint.configuration.send('disable_autoloader_layout')
 
 task default: [:validate_templates, :validate_manifests, :rubocop, :spec, :lint]
 

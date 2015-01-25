@@ -21,7 +21,7 @@ end
 if ENV['PUPPET_GEM_VERSION'].nil?
   gem 'puppet', require: false
 else
-  gem 'puppet', puppetversion, require: false
+  gem 'puppet', ENV['PUPPET_GEM_VERSION'], require: false
 end
 
 # vim:ft=ruby

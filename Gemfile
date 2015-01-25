@@ -12,16 +12,16 @@ group :development, :test do
   gem 'simplecov',               require: false
 end
 
-if facterversion = ENV['FACTER_GEM_VERSION']
-  gem 'facter', facterversion, require: false
-else
+if ENV['FACTER_GEM_VERSION'].nil?
   gem 'facter', require: false
+else
+  gem 'facter', ENV['FACTER_GEM_VERSION'], require: false
 end
 
-if puppetversion = ENV['PUPPET_GEM_VERSION']
-  gem 'puppet', puppetversion, require: false
-else
+if ENV['PUPPET_GEM_VERSION'].nil?
   gem 'puppet', require: false
+else
+  gem 'puppet', puppetversion, require: false
 end
 
 # vim:ft=ruby

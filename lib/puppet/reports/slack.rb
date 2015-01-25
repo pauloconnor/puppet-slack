@@ -3,12 +3,12 @@ require 'yaml'
 require 'faraday'
 
 Puppet::Reports.register_report(:slack) do
-  desc <<-DESC
-  Send notification of puppet run reports to Slack Messaging.
-  DESC
+  desc 'Send notification of puppet run reports to Slack Messaging.'
 
   @configfile = File.join(File.dirname(Puppet.settings[:config]), 'slack.yaml')
-  fail(Puppet::ParseError, "Slack report config file #{@configfile} not readable") unless File.exist?(@configfile)
+  unless File.readable?(@configfile)
+    fail(Puppet::ParseError, "Slack report config file #{@configfile} not readable.")
+  end
   @config = YAML.load_file(@configfile)
   SLACK_TOKEN = @config[:slack_token]
   SLACK_CHANNEL = @config[:slack_channel]

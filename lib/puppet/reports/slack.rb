@@ -16,12 +16,12 @@ class SlackReporter
 
   # Compose a Slack API compatible JSON object containing +message+.
   def compose(message)
-      JSON.generate({
-        'channel'  => @config[:slack_channel],
-        'username' => @config[:slack_botname],
-        'icon_url' => @config[:slack_iconurl],
-        'text'     => message
-      })
+    JSON.generate(
+      'channel'  => @config[:slack_channel],
+      'username' => @config[:slack_botname],
+      'icon_url' => @config[:slack_iconurl],
+      'text'     => message
+    )
   end
 
   # Send +message+ to Slack.
@@ -42,18 +42,14 @@ Puppet::Reports.register_report(:slack) do
   desc 'Send notification of puppet run reports to Slack Messaging.'
 
   def process
-    case status
-    when 'unchanged'
-      return
-    when 'changed'
-      status_icon = ':sparkles:'
-      # Refer: https://slack.zendesk.com/hc/en-us/articles/202931348-Using-emoji-and-emoticons
-    when 'failed'
-      status_icon = ':no_entry:'
-    end
+    return if status == 'unchanged'
+    status_icon = ':sparkles:' if status == 'changed'
+    status_icon = ':no_entry:' if status == 'failed'
+    # Refer: https://slack.zendesk.com/hc/en-us/articles/202931348-Using-emoji-and-emoticons
 
     Puppet.debug "Sending status for #{host} to Slack."
-    message = "#{status_icon} Puppet run for #{host} #{status} at #{Time.now.asctime}."
-    SlackReporter.new.say(message)
+    SlackReporter.new.say(
+      "#{status_icon} Puppet run for #{host} #{status} at #{Time.now.asctime}."
+    )
   end
 end

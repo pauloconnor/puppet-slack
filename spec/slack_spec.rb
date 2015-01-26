@@ -5,8 +5,8 @@ require_relative '../lib/puppet/reports/slack.rb'
 describe SlackReporter do
   sr = SlackReporter.new
 
-  describe '.build_json_request' do
-    request = JSON.parse(sr.build_json_request('Message!'))
+  describe '.compose' do
+    request = JSON.parse(sr.compose('Message!'))
 
     it 'sets the text' do
       expect(request['text']).to eq('Message!')

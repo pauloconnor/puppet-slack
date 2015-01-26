@@ -24,7 +24,7 @@ task :validate_manifests do
 end
 
 desc 'Style-check Ruby files with RuboCop.'
-task rubocop: [:get_rubocop] do
+task :rubocop do
   system 'rubocop .'
 end
 

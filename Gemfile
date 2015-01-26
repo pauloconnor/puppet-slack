@@ -23,7 +23,7 @@ end
 if ENV['PUPPET_GEM_VERSION'].nil?
   gem 'puppet', :require => false
 else
-    gem 'puppet', ENV['PUPPET_GEM_VERSION'], :require => false
+  gem 'puppet', ENV['PUPPET_GEM_VERSION'], :require => false
 end
 
 # rubocop:enable Style/HashSyntax

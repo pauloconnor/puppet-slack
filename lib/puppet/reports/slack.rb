@@ -14,25 +14,26 @@ class SlackReporter
     @config = YAML.load_file(configfile)
   end
 
-  def build_json_request(text)
-    request = {
-      'channel' => @config[:slack_channel],
-      'username' => @config[:slack_botname],
-      'icon_url' => @config[:slack_iconurl],
-      'text' => text
-    }
-    JSON.generate(request)
+  # Compose a Slack API compatible JSON object containing +message+.
+  def compose(message)
+      JSON.generate({
+        'channel'  => @config[:slack_channel],
+        'username' => @config[:slack_botname],
+        'icon_url' => @config[:slack_iconurl],
+        'text'     => message
+      })
   end
 
-  def report(message)
-    conn = Faraday.new(url: "#{@config[:slack_url]}") do |faraday|
+  # Send +message+ to Slack.
+  def say(message)
+    conn = Faraday.new(url: @config[:slack_url]) do |faraday|
       faraday.request :url_encoded
       faraday.adapter Faraday.default_adapter
     end
 
     conn.post do |req|
       req.url "/services/hooks/incoming-webhook?token=#{@config[:slack_token]}"
-      req.body = build_json_request(message)
+      req.body = compose(message)
     end
   end
 end
@@ -41,10 +42,19 @@ Puppet::Reports.register_report(:slack) do
   desc 'Send notification of puppet run reports to Slack Messaging.'
 
   def process
-    return unless status == 'failed' || status == 'changed'
+    case status
+    when 'unchanged'
+      return
+    when 'changed'
+      status_icon = ':sparkles:'
+      # Refer: https://slack.zendesk.com/hc/en-us/articles/202931348-Using-emoji-and-emoticons
+    when 'failed'
+      status_icon = ':no_entry:'
+    end
+
     Puppet.debug "Sending status for #{host} to Slack."
-    reporter = SlackReporter.new
-    message = "Puppet run for #{host} `#{status}` at #{Time.now.asctime}"
-    reporter.report(message)
+    puppetboard = 'http://puppetboard.in.n6.com.au'
+    message = "#{status_icon} <#{puppetboard}/node/#{host}|#{host}> #{status}."
+    SlackReporter.new.say(message)
   end
 end

@@ -53,8 +53,7 @@ Puppet::Reports.register_report(:slack) do
     end
 
     Puppet.debug "Sending status for #{host} to Slack."
-    puppetboard = 'http://puppetboard.in.n6.com.au'
-    message = "#{status_icon} <#{puppetboard}/node/#{host}|#{host}> #{status}."
+    message = "#{status_icon} Puppet run for #{host} #{status} at #{Time.now.asctime}."
     SlackReporter.new.say(message)
   end
 end

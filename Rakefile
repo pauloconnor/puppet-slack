@@ -32,19 +32,3 @@ RSpec::Core::RakeTask.new(:spec) do |t|
   t.pattern = 'spec/**/*_spec.rb'
   t.rspec_opts = '--format documentation --color'
 end
-
-task :get_rubocop do
-  gem_install('rubocop') unless runs_ok('rubocop --version')
-end
-
-# Run a shell command and return true if it succeeds.
-def runs_ok(command)
-  system "#{command} > /dev/null 2>&1"
-  $CHILD_STATUS.exitstatus == 0
-end
-
-# Install a Gem
-def gem_install(gem)
-  puts "Installing #{gem}..."
-  system "sudo gem install #{gem}"
-end

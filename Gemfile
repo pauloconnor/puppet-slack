@@ -11,6 +11,7 @@ group :development, :test do
   gem 'beaker-rspec',           :require => false
   gem 'pry',                    :require => false
   gem 'simplecov',              :require => false
+  gem 'rubocop',                :require => false
 end
 
 if ENV['FACTER_GEM_VERSION'].nil?
@@ -26,4 +27,3 @@ else
 end
 
 # rubocop:enable Style/HashSyntax
-# vim:ft=ruby

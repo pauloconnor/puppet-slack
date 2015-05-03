@@ -3,20 +3,11 @@ require 'yaml'
 require 'faraday'
 require 'json'
 require 'uri'
+require 'pp'
 
-# Helper class to handle interacting with the Slack API.
-class SlackReporter
-  def initialize
-    configfile = File.join(Puppet.settings[:confdir], 'slack.yaml')
-    unless File.readable?(configfile)
-      msg = "Slack report config file #{@configfile} is not readable."
-      fail(Puppet::ParseError, msg)
-    end
-    @config = YAML.load_file(configfile)
-    @slack_uri = URI.parse(@config[:slack_url])
-  end
+Puppet::Reports.register_report(:slack) do
+  desc 'Send notification of puppet run reports to Slack Messaging.'
 
-  # Compose a Slack API compatible JSON object containing +message+.
   def compose(message)
     JSON.generate(
       'channel'  => @config[:slack_channel],
@@ -26,36 +17,45 @@ class SlackReporter
     )
   end
 
-  # Send +message+ to Slack.
-  def say(message)
-    conn = Faraday.new(url: @slack_uri.scheme + '//' + @slack_uri.host) do |faraday|
-      faraday.request :url_encoded
-      faraday.adapter Faraday.default_adapter
-    end
-
-    conn.post do |req|
-      req.url  = @slack_uri.path
-      req.body = compose(message)
-    end
-  end
-end
-
-Puppet::Reports.register_report(:slack) do
-  desc 'Send notification of puppet run reports to Slack Messaging.'
-
   def process
+
+    # setup
+    configfile = File.join(Puppet.settings[:confdir], 'slack.yaml')
+    unless File.readable?(configfile)
+      msg = "Slack report config file #{configfile} is not readable."
+      fail(Puppet::ParseError, msg)
+    end
+    config = YAML.load_file(configfile)
+    slack_uri = URI.parse(config[:slack_url])
+
+    # debug
+    our_report = self.pretty_inspect
+    Puppet.info "Got report object: #{our_report}"
+
+    # filter
     return if self.status == 'unchanged'
     status_icon = ':sparkles:' if self.status == 'changed'
     status_icon = ':no_entry:' if self.status == 'failed'
     # Refer: https://slack.zendesk.com/hc/en-us/articles/202931348-Using-emoji-and-emoticons
 
-    if @config[:slack_puppetboard_url]
+    # construct message
+    if config[:slack_puppetboard_url]
       message = "#{status_icon} Puppet run for <#{config[:slack_puppetboard_url]}/node/#{self.host}|#{self.host}> #{self.status} at #{Time.now.asctime}."
     else
       message = "#{status_icon} Puppet run for #{self.host} #{self.status} at #{Time.now.asctime}."
     end
 
-    Puppet.debug "Sending status for #{self.host} to Slack."
-    SlackReporter.new.say(message)
+    Puppet.info "Sending status for #{self.host} to Slack."
+
+    conn = Faraday.new(url: slack_uri.scheme + '//' + slack_uri.host) do |faraday|
+      faraday.request :url_encoded
+      faraday.adapter Faraday.default_adapter
+    end
+
+    conn.post do |req|
+      req.url  = slack_uri.path
+      req.body = compose(message)
+    end
+
   end
 end

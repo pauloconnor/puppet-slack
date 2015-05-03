@@ -23,7 +23,7 @@ Puppet::Reports.register_report(:slack) do
     configfile = File.join(Puppet.settings[:confdir], 'slack.yaml')
     unless File.readable?(configfile)
       msg = "Slack report config file #{configfile} is not readable."
-      fail(Puppet::ParseError, msg)
+      raise(Puppet::ParseError, msg)
     end
     config = YAML.load_file(configfile)
     slack_uri = URI.parse(config[:slack_url])
@@ -47,13 +47,13 @@ Puppet::Reports.register_report(:slack) do
 
     Puppet.info "Sending status for #{self.host} to Slack."
 
-    conn = Faraday.new(url: slack_uri.scheme + '//' + slack_uri.host) do |faraday|
+    conn = Faraday.new(:url => slack_uri.scheme + '//' + slack_uri.host) do |faraday|
       faraday.request :url_encoded
       faraday.adapter Faraday.default_adapter
     end
 
     conn.post do |req|
-      req.url  = slack_uri.path
+      req.url slack_uri.path
       req.body = compose(message)
     end
 

@@ -48,7 +48,7 @@ Puppet::Reports.register_report(:slack) do
     # Refer: https://slack.zendesk.com/hc/en-us/articles/202931348-Using-emoji-and-emoticons
 
     if @config[:slack_puppetboard_url]
-      message = "#{status_icon} Puppet run for <#{@config[:slack_puppetboard_url]}/node/#{host}|#{host}> #{status} at #{Time.now.asctime}."
+      message = "#{status_icon} Puppet run for <#{config[:slack_puppetboard_url]}/node/#{host}|#{host}> #{status} at #{Time.now.asctime}."
     else
       message = "#{status_icon} Puppet run for #{host} #{status} at #{Time.now.asctime}."
     end

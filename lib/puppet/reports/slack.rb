@@ -2,6 +2,7 @@ require 'puppet'
 require 'yaml'
 require 'faraday'
 require 'json'
+require 'uri'
 
 # Helper class to handle interacting with the Slack API.
 class SlackReporter
@@ -12,6 +13,7 @@ class SlackReporter
       fail(Puppet::ParseError, msg)
     end
     @config = YAML.load_file(configfile)
+    @slack_uri = URI.parse(@config[:slack_url])
   end
 
   # Compose a Slack API compatible JSON object containing +message+.
@@ -26,12 +28,13 @@ class SlackReporter
 
   # Send +message+ to Slack.
   def say(message)
-    conn = Faraday.new(url: @config[:slack_url]) do |faraday|
+    conn = Faraday.new(url: @slack_uri.scheme + '//' + @slack_uri.host) do |faraday|
       faraday.request :url_encoded
       faraday.adapter Faraday.default_adapter
     end
 
     conn.post do |req|
+      req.url  = @slack_uri.path
       req.body = compose(message)
     end
   end

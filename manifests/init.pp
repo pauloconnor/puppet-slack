@@ -7,9 +7,10 @@ class slack (
   $slack_botname        = 'puppet',
   $slack_puppet_reports = undef,
   $slack_puppet_dir     = '/etc/puppet',
+  $slack_puppetboard    = undef,
   $is_puppetmaster      = true,
 ) {
-  
+
   anchor {'slack::begin':}
 
   if $is_puppetmaster == true {
@@ -19,7 +20,7 @@ class slack (
       require  => Anchor['slack::begin'],
       before   => File["${slack_puppet_dir}/slack.yaml"],
     }
-  }else {
+  } else {
     include check_run
     case $::osfamily {
       'redhat','debian': {

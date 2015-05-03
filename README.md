@@ -15,13 +15,13 @@ A Puppet report handler for sending notifications of puppet runs to
 1. Add the class to the puppet master node:
 
          class { 'slack':
-           slack_url            => 'YOUR_SLACK_URL',
-           slack_token          => 'INCOMING_WEBHOOK_TOKEN',
-           slack_channel        => '#puppet',
-           slack_botname        => 'puppet',
-           slack_iconurl        => 'http://puppetlabs.com/wp-content/uploads/2010/12/PL_logo_vertical_RGB_lg.jpg',
-           slack_puppet_reports => 'store,http,slack',
-           is_puppetmaster		=> true,
+           slack_url             => 'INCOMING_WEBHOOK_URL',
+           slack_channel         => '#puppet',
+           slack_botname         => 'puppet',
+           slack_iconurl         => 'http://puppetlabs.com/wp-content/uploads/2010/12/PL_logo_vertical_RGB_lg.jpg',
+           slack_puppet_reports  => 'store,http,slack',
+           slack_puppetboard_url => 'http://puppetboard.example.com'
+           is_puppetmaster		 => true,
          }
   you might also want to set `slack_puppet_dir => '/etc/puppetlabs/puppet'` if you use puppet enterprise.
 
@@ -34,12 +34,7 @@ The slack module sets up the puppetmaster or puppetserver for slack integration.
 
 #####`slack_url`
 
-The base url to your slack page. Required.
-Example: 'https://yourcompany.slack.com'
-
-#####`slack_token`
-
-The secret webhook. Required.
+The full, secret webhook URL. Required.
 
 #####`slack_channel`
 
@@ -61,6 +56,10 @@ Default: 'http://puppetlabs.com/wp-content/uploads/2010/12/PL_logo_vertical_RGB_
 Manages the puppet report in the puppet.conf.  If left undef, this module will not modify the puppet.conf.
 Example: 'store,http,slack'
 
+#####`slack_puppetboard_url`
+
+Optional base URL of a puppetboard for your nodes. Makes the hostname in the report a link to the puppetboard info.
+
 #####`is_puppetmaster`
 
 The default is 'true' which means slack will manage the installation for a puppetmaster.
@@ -74,7 +73,7 @@ Set to 'false' to use the [new PuppetServer](https://github.com/puppetlabs/puppe
 
 The following operating systems were tested:
 * Centos 6.5
-* Ubuntu 14.04 
+* Ubuntu 14.04
 
 ## Author
 

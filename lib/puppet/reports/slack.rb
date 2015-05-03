@@ -32,7 +32,6 @@ class SlackReporter
     end
 
     conn.post do |req|
-      req.url "/services/hooks/incoming-webhook?token=#{@config[:slack_token]}"
       req.body = compose(message)
     end
   end

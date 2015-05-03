@@ -1,6 +1,5 @@
 # Report processor integration with Slack.com
 class slack (
-  $slack_token          = undef,
   $slack_url            = undef,
   $slack_iconurl        = 'http://puppetlabs.com/wp-content/uploads/2010/12/PL_logo_vertical_RGB_lg.png',
   $slack_channel        = '#puppet',

@@ -30,7 +30,7 @@ Puppet::Reports.register_report(:slack) do
 
     # debug
     our_report = self.pretty_inspect
-    Puppet.info "Got report object: #{our_report}"
+    Puppet.warning "Got report object: #{our_report}"
 
     # filter
     return if self.status == 'unchanged'
@@ -45,7 +45,7 @@ Puppet::Reports.register_report(:slack) do
       message = "#{status_icon} Puppet run for #{self.host} #{self.status} at #{Time.now.asctime}."
     end
 
-    Puppet.info "Sending status for #{self.host} to Slack."
+    Puppet.warning "Sending status for #{self.host} to Slack."
 
     conn = Faraday.new(:url => slack_uri.scheme + '//' + slack_uri.host) do |faraday|
       faraday.request :url_encoded

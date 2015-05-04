@@ -3,16 +3,15 @@ require 'yaml'
 require 'faraday'
 require 'json'
 require 'uri'
-require 'pp'
 
 Puppet::Reports.register_report(:slack) do
   desc 'Send notification of puppet run reports to Slack Messaging.'
 
-  def compose(message)
+  def compose(config, message)
     JSON.generate(
-      'channel'  => @config[:slack_channel],
-      'username' => @config[:slack_botname],
-      'icon_url' => @config[:slack_iconurl],
+      'channel'  => config[:slack_channel],
+      'username' => config[:slack_botname],
+      'icon_url' => config[:slack_iconurl],
       'text'     => message
     )
   end
@@ -28,12 +27,9 @@ Puppet::Reports.register_report(:slack) do
     config = YAML.load_file(configfile)
     slack_uri = URI.parse(config[:slack_url])
 
-    # debug
-    our_report = self.pretty_inspect
-    Puppet.warning "Got report object: #{our_report}"
-
     # filter
     return if self.status == 'unchanged'
+    return if self.status == 'changed' and self.environment == 'production'
     status_icon = ':sparkles:' if self.status == 'changed'
     status_icon = ':no_entry:' if self.status == 'failed'
     # Refer: https://slack.zendesk.com/hc/en-us/articles/202931348-Using-emoji-and-emoticons
@@ -45,7 +41,11 @@ Puppet::Reports.register_report(:slack) do
       message = "#{status_icon} Puppet run for #{self.host} #{self.status} at #{Time.now.asctime}."
     end
 
-    Puppet.warning "Sending status for #{self.host} to Slack."
+    if self.environment != 'production'
+      message = message + " Environment was #{self.environment}."
+    end
+
+    Puppet.info "Sending status for #{self.host} to Slack."
 
     conn = Faraday.new(:url => slack_uri.scheme + '//' + slack_uri.host) do |faraday|
       faraday.request :url_encoded
@@ -54,7 +54,7 @@ Puppet::Reports.register_report(:slack) do
 
     conn.post do |req|
       req.url slack_uri.path
-      req.body = compose(message)
+      req.body = compose(config, message)
     end
 
   end

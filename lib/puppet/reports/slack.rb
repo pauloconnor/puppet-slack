@@ -47,7 +47,7 @@ Puppet::Reports.register_report(:slack) do
 
     Puppet.info "Sending status for #{self.host} to Slack."
 
-    conn = Faraday.new(:url => slack_uri.scheme + '//' + slack_uri.host) do |faraday|
+    conn = Faraday.new(:url => slack_uri.scheme + '://' + slack_uri.host) do |faraday|
       faraday.request :url_encoded
       faraday.adapter Faraday.default_adapter
     end

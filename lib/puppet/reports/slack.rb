@@ -29,7 +29,7 @@ Puppet::Reports.register_report(:slack) do
 
     # filter
     return if self.status == 'unchanged'
-    return if self.status == 'changed' and self.environment == 'production'
+    return if self.status == 'changed'
     status_icon = ':sparkles:' if self.status == 'changed'
     status_icon = ':no_entry:' if self.status == 'failed'
     # Refer: https://slack.zendesk.com/hc/en-us/articles/202931348-Using-emoji-and-emoticons

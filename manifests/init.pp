@@ -49,11 +49,11 @@ class slack (
       section => 'master',
       setting => 'reports',
       value   => $slack_puppet_reports,
-      require => File [ "${slack_puppet_dir}/slack.yaml"],
+      require => File[ "${slack_puppet_dir}/slack.yaml"],
       before  => Anchor['slack::end'],
     }
   }
   anchor{'slack::end':
-    require => File [ "${slack_puppet_dir}/slack.yaml"],
+    require => File[ "${slack_puppet_dir}/slack.yaml"],
   }
 }

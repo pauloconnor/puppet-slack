@@ -58,7 +58,7 @@ Puppet::Reports.register_report(:slack) do
 
     conn.post do |req|
       req.url slack_uri.path
-      req.body = compose(config, message)
+      req.body = "payload=" + compose(config, message)
     end
 
   end

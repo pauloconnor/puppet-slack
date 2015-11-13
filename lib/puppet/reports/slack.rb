@@ -29,10 +29,13 @@ Puppet::Reports.register_report(:slack) do
     slack_uri = URI.parse(config[:slack_url])
 
     # filter
-    return if self.status == 'unchanged'
-    return if self.status == 'changed'
-    status_icon = ':sparkles:' if self.status == 'changed'
-    status_icon = ':no_entry:' if self.status == 'failed'
+    #return if self.status == 'unchanged'
+    #return if self.status == 'changed'
+    status_icon = case self.status
+                        when 'changed' then ':sparkles:'
+                        when 'failed' then ':no_entry:'
+                        when 'unchanged' then ':white_check_mark:'
+                  end
     # Refer: https://slack.zendesk.com/hc/en-us/articles/202931348-Using-emoji-and-emoticons
 
     # construct message

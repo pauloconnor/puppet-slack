@@ -8,12 +8,13 @@ Puppet::Reports.register_report(:slack) do
   desc 'Send notification of puppet run reports to Slack Messaging.'
 
   def compose(config, message)
-    JSON.generate(
-      'channel'  => config[:slack_channel],
-      'username' => config[:slack_botname],
-      'icon_url' => config[:slack_iconurl],
-      'text'     => message
-    )
+      payload = {
+        'channel'  => config[:slack_channel],
+        'username' => config[:slack_botname],
+        'icon_url' => config[:slack_iconurl],
+        'text'     => message
+      }
+      JSON.generate(payload)
   end
 
   def process

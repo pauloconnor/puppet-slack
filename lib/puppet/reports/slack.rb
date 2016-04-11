@@ -45,9 +45,28 @@ Puppet::Reports.register_report(:slack) do
       message = "#{status_icon} Puppet run for #{self.host} in #{self.environment} at #{Time.now.asctime}." # #{self.status}
     end
 
-    # if self.environment != 'production'
-    #   message = message + " Environment was #{self.environment}."
-    # end
+#      :runmode => Puppet.settings[:name],
+
+    total_time = ''
+    self.metrics.each { |metric, data|
+        path = ['puppet', metric]
+        data.values.each { |name, _, value|
+          path << name
+          debug = [path.join('.'), value].join(' ')
+          Puppet.debug "Sending: '#{debug}'"
+          if path.join('.') == 'puppet.time.total'
+            total_time = " - " + [path.join('.'), value].join(' ') + ' seconds'
+          end
+          #metrics = metrics + "\n | " +  [path.join('.'), value].join(' ')
+          path.pop()
+        }
+      }        
+
+     message = [
+       message,
+       " ",
+       total_time
+     ].flatten.join("\n")    
 
     Puppet.info "Sending status for #{self.host} to Slack."
 

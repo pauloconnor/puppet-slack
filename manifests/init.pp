@@ -14,7 +14,7 @@ class slack (
 
   if $is_puppetmaster == true {
     package { 'faraday':
-      ensure   => installed,
+      ensure   => '0.9.0',
       provider => gem,
       require  => Anchor['slack::begin'],
       before   => File["${slack_puppet_dir}/slack.yaml"],

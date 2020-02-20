@@ -1,7 +1,6 @@
 # Report processor integration with Slack.com
 class slack (
-  $slack_token          = undef,
-  $slack_url            = undef,
+  $slack_webhook        = undef,
   $slack_iconurl        = 'http://puppetlabs.com/wp-content/uploads/2010/12/PL_logo_vertical_RGB_lg.png',
   $slack_channel        = '#puppet',
   $slack_botname        = 'puppet',
@@ -9,7 +8,7 @@ class slack (
   $slack_puppet_dir     = '/etc/puppet',
   $is_puppetmaster      = true,
 ) {
-  
+
   anchor {'slack::begin':}
 
   if $is_puppetmaster == true {
@@ -49,11 +48,11 @@ class slack (
       section => 'master',
       setting => 'reports',
       value   => $slack_puppet_reports,
-      require => File [ "${slack_puppet_dir}/slack.yaml"],
+      require => File["${slack_puppet_dir}/slack.yaml"],
       before  => Anchor['slack::end'],
     }
   }
   anchor{'slack::end':
-    require => File [ "${slack_puppet_dir}/slack.yaml"],
+    require => File["${slack_puppet_dir}/slack.yaml"],
   }
 }

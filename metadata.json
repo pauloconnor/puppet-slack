@@ -23,7 +23,7 @@
   ],
   "dependencies": [
     {
-      "name": "conzar/check_run",
+      "name": "landcareresearch/check_run",
       "version_requirement": ">= 0.2.3"
     }
   ]

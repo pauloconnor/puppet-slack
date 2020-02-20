@@ -15,13 +15,12 @@ A Puppet report handler for sending notifications of puppet runs to
 1. Add the class to the puppet master node:
 
          class { 'slack':
-           slack_url             => 'INCOMING_WEBHOOK_URL',
-           slack_channel         => '#puppet',
-           slack_botname         => 'puppet',
-           slack_iconurl         => 'http://puppetlabs.com/wp-content/uploads/2010/12/PL_logo_vertical_RGB_lg.jpg',
-           slack_puppet_reports  => 'store,http,slack',
-           slack_puppetboard_url => 'http://puppetboard.example.com'
-           is_puppetmaster		 => true,
+           slack_webhook        => 'INCOMING_WEBHOOK_URL',
+           slack_channel        => '#puppet',
+           slack_botname        => 'puppet',
+           slack_iconurl        => 'http://puppetlabs.com/wp-content/uploads/2010/12/PL_logo_vertical_RGB_lg.jpg',
+           slack_puppet_reports => 'store,http,slack',
+           is_puppetmaster		=> true,
          }
   you might also want to set `slack_puppet_dir => '/etc/puppetlabs/puppet'` if you use puppet enterprise.
 
@@ -32,9 +31,9 @@ The slack module sets up the puppetmaster or puppetserver for slack integration.
 
 **Parameters within `slack`:**
 
-#####`slack_url`
+#####`slack_webhook`
 
-The full, secret webhook URL. Required.
+The secret webhook URL. Required.
 
 #####`slack_channel`
 

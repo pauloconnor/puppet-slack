@@ -1,50 +1,83 @@
+require 'rubygems' if RUBY_VERSION < '1.9.0'
 require 'puppet'
 require 'yaml'
 require 'json'
-require 'faraday'
+require 'uri'
+require 'net/https'
+require 'open-uri'
 
 Puppet::Reports.register_report(:slack) do
+  desc 'Send notification of puppet run reports to Slack Messaging.'
 
-  desc <<-DESC
-  Send notification of puppet run reports to Slack Messaging.
-  DESC
-
-  @configfile = File.join(File.dirname(Puppet.settings[:config]), "slack.yaml")
-  raise(Puppet::ParseError, "Slack report config file #{@configfile} not readable") unless File.exist?(@configfile)
-  @config = YAML.load_file(@configfile)
-  SLACK_WEBHOOK = @config[:slack_webhook]
-  SLACK_CHANNEL = @config[:slack_channel]
-  SLACK_BOTNAME = @config[:slack_botname]
-  SLACK_ICONURL = @config[:slack_iconurl]
+  def compose(config, message)
+      payload = {
+        'channel'  => config[:slack_channel],
+        'username' => config[:slack_botname],
+        'icon_url' => config[:slack_iconurl],
+        'text'     => message
+      }
+      JSON.generate(payload)
+  end
 
   def process
-    if self.status == "failed" or self.status == "changed"
-      Puppet.debug "Sending status for #{self.host} to Slack."
-      conn = Faraday.new(:url => "#{SLACK_WEBHOOK}") do |faraday|
-        faraday.request  :url_encoded
-        faraday.adapter  Faraday.default_adapter
-      end
 
-      color = case self.status
-                when 'failed'
-                  'danger'
-                when 'changed'
-                  'good'
-                else
-                  'warning'
-              end
-
-      message = { :channel =>  SLACK_CHANNEL,
-                  :username => SLACK_BOTNAME,
-                  :icon_url => SLACK_ICONURL,
-                  :attachments => [{ :fallback => "Puppet run for #{self.host} `#{self.status}` at #{Time.now.asctime}",
-                                     :color => color,
-                                     :text => "Puppet run for #{self.host} `#{self.status}` at #{Time.now.asctime}",
-                                     :mrkdwn_in => ["text"] }]}
-
-      conn.post do |req|
-        req.body = JSON.dump(message)
-      end
+    # setup
+    configfile = File.join(Puppet.settings[:confdir], 'slack.yaml')
+    unless File.readable?(configfile)
+      msg = "Slack report config file #{configfile} is not readable."
+      raise(Puppet::ParseError, msg)
     end
+    config = YAML.load_file(configfile)
+
+
+    # filter
+    status_icon = case self.status
+                        when 'changed' then ':sparkles:'
+                        when 'failed' then ':no_entry:'
+                        when 'unchanged' then ':white_check_mark:'
+                  end
+    # Refer: https://slack.zendesk.com/hc/en-us/articles/202931348-Using-emoji-and-emoticons
+
+    # construct message
+    if config[:slack_puppetboard_url]
+      message = "#{status_icon} Puppet run for <#{config[:slack_puppetboard_url]}/node/#{self.host}|#{self.host}> #{self.status} at #{Time.now.asctime}."
+    else
+      message = "#{status_icon} Puppet run for #{self.host} in #{self.environment} at #{Time.now.asctime}." # #{self.status}
+    end
+
+#      :runmode => Puppet.settings[:name],
+
+    total_time = ''
+    self.metrics.each { |metric, data|
+        path = ['puppet', metric]
+        data.values.each { |name, _, value|
+          path << name
+          debug = [path.join('.'), value].join(' ')
+          Puppet.debug "Sending: '#{debug}'"
+          if path.join('.') == 'puppet.time.total'
+            total_time = " - " + [path.join('.'), value].join(' ') + ' seconds'
+          end
+          #metrics = metrics + "\n | " +  [path.join('.'), value].join(' ')
+          path.pop()
+        }
+      }        
+
+     message = [
+       message,
+       " ",
+       total_time
+     ].flatten.join("\n")    
+
+    Puppet.info "Sending status for #{self.host} to Slack."
+
+    uri = URI.parse(config[:slack_url])
+    http = Net::HTTP.new(uri.host, uri.port)
+    # http.set_debug_output($stdout)
+    http.use_ssl = true
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    request = Net::HTTP::Post.new(uri.path)
+    request.body = "payload=" + compose(config, message)
+    response = http.request(request)    
+ 
   end
 end

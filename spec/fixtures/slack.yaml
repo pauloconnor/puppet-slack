@@ -1,0 +1,6 @@
+---
+:slack_token: 'S3CRETTOK3N'
+:slack_channel: '#puppet_channel'
+:slack_botname: 'puppet_user'
+:slack_iconurl: 'http://server/puppet.jpg'
+:slack_url: 'https://example.slack.com'

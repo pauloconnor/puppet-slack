@@ -6,33 +6,10 @@ class slack (
   $slack_botname        = 'puppet',
   $slack_puppet_reports = undef,
   $slack_puppet_dir     = '/etc/puppet',
-  $is_puppetmaster      = true,
+  $slack_statuses       = ['changed', 'failed', 'unchanged']
 ) {
 
   anchor {'slack::begin':}
-
-  if $is_puppetmaster == true {
-    package { 'faraday':
-      ensure   => '0.9.0',
-      provider => gem,
-      require  => Anchor['slack::begin'],
-      before   => File["${slack_puppet_dir}/slack.yaml"],
-    }
-  } else {
-    include check_run
-    case $::osfamily {
-      'redhat','debian': {
-        check_run::task { 'task_faraday_gem_install':
-          exec_command => '/usr/bin/puppetserver gem install faraday',
-          require      => Anchor['slack::begin'],
-          before       => File["${slack_puppet_dir}/slack.yaml"],
-        }
-      }
-      default: {
-        fail("Unsupported osfamily ${::osfamily}")
-      }
-    }
-  }
 
   file { "${slack_puppet_dir}/slack.yaml":
     owner   => root,

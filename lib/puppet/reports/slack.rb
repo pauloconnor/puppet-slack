@@ -45,39 +45,39 @@ Puppet::Reports.register_report(:slack) do
       message = "#{status_icon} Puppet run for #{self.host} in #{self.environment} at #{Time.now.asctime}." # #{self.status}
     end
 
-#      :runmode => Puppet.settings[:name],
 
-    total_time = ''
-    self.metrics.each { |metric, data|
-        path = ['puppet', metric]
-        data.values.each { |name, _, value|
-          path << name
-          debug = [path.join('.'), value].join(' ')
-          Puppet.debug "Sending: '#{debug}'"
-          if path.join('.') == 'puppet.time.total'
-            total_time = " - " + [path.join('.'), value].join(' ') + ' seconds'
-          end
-          #metrics = metrics + "\n | " +  [path.join('.'), value].join(' ')
-          path.pop()
+    if config[:slack_statuses].include?(self.status)
+      total_time = ''
+      self.metrics.each { |metric, data|
+          path = ['puppet', metric]
+          data.values.each { |name, _, value|
+            path << name
+            debug = [path.join('.'), value].join(' ')
+            Puppet.debug "Sending: '#{debug}'"
+            if path.join('.') == 'puppet.time.total'
+              total_time = " - " + [path.join('.'), value].join(' ') + ' seconds'
+            end
+            #metrics = metrics + "\n | " +  [path.join('.'), value].join(' ')
+            path.pop()
+          }
         }
-      }        
 
-     message = [
-       message,
-       " ",
-       total_time
-     ].flatten.join("\n")    
+      message = [
+        message,
+        " ",
+        total_time
+      ].flatten.join("\n")
 
-    Puppet.info "Sending status for #{self.host} to Slack."
+      Puppet.info "Sending status for #{self.host} to Slack."
 
-    uri = URI.parse(config[:slack_url])
-    http = Net::HTTP.new(uri.host, uri.port)
-    # http.set_debug_output($stdout)
-    http.use_ssl = true
-    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-    request = Net::HTTP::Post.new(uri.path)
-    request.body = "payload=" + compose(config, message)
-    response = http.request(request)    
- 
+      uri = URI.parse(config[:slack_url])
+      http = Net::HTTP.new(uri.host, uri.port)
+      # http.set_debug_output($stdout)
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      request = Net::HTTP::Post.new(uri.path)
+      request.body = "payload=" + compose(config, message)
+      response = http.request(request)
+    end
   end
 end

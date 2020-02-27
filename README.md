@@ -20,7 +20,7 @@ A Puppet report handler for sending notifications of puppet runs to
            slack_botname        => 'puppet',
            slack_iconurl        => 'http://puppetlabs.com/wp-content/uploads/2010/12/PL_logo_vertical_RGB_lg.jpg',
            slack_puppet_reports => 'store,http,slack',
-           is_puppetmaster		=> true,
+           slack_statuses       => ['changed', 'failed', 'unchanged']
          }
   you might also want to set `slack_puppet_dir => '/etc/puppetlabs/puppet'` if you use puppet enterprise.
 
@@ -59,10 +59,9 @@ Example: 'store,http,slack'
 
 Optional base URL of a puppetboard for your nodes. Makes the hostname in the report a link to the puppetboard info.
 
-#####`is_puppetmaster`
+#####`slack_statuses`
 
-The default is 'true' which means slack will manage the installation for a puppetmaster.
-Set to 'false' to use the [new PuppetServer](https://github.com/puppetlabs/puppet-server).
+Which events do you want sent to the Slack channel
 
 ## Screenshot
 

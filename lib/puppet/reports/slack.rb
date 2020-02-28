@@ -1,23 +1,13 @@
-require 'rubygems' if RUBY_VERSION < '1.9.0'
 require 'puppet'
-require 'yaml'
 require 'json'
-require 'uri'
 require 'net/https'
 require 'open-uri'
+require 'socket'
+require 'uri'
+require 'yaml'
 
 Puppet::Reports.register_report(:slack) do
   desc 'Send notification of puppet run reports to Slack Messaging.'
-
-  def compose(config, message)
-      payload = {
-        'channel'  => config[:slack_channel],
-        'username' => config[:slack_botname],
-        'icon_url' => config[:slack_iconurl],
-        'text'     => message
-      }
-      JSON.generate(payload)
-  end
 
   def process
 
@@ -29,25 +19,25 @@ Puppet::Reports.register_report(:slack) do
     end
     config = YAML.load_file(configfile)
 
-
     # filter
     status_icon = case self.status
                         when 'changed' then ':sparkles:'
                         when 'failed' then ':no_entry:'
                         when 'unchanged' then ':white_check_mark:'
                   end
-    # Refer: https://slack.zendesk.com/hc/en-us/articles/202931348-Using-emoji-and-emoticons
-
-    # construct message
-    if config[:slack_puppetboard_url]
-      message = "#{status_icon} Puppet run for <#{config[:slack_puppetboard_url]}/node/#{self.host}|#{self.host}> #{self.status} at #{Time.now.asctime}."
-    else
-      message = "#{status_icon} Puppet run for #{self.host} in #{self.environment} at #{Time.now.asctime}." # #{self.status}
-    end
-
 
     if config[:slack_statuses].include?(self.status)
+      # We don't have the socket gem available to us
+      servername = Socket.gethostbyname(Socket.gethostname).first
+      # construct message
+      if config[:slack_puppetboard_url]
+        top_message = "#{status_icon} *<#{config[:slack_puppetboard_url]}/node/#{self.host}|#{self.host}>* at #{Time.now.asctime}\nEnvironment *#{self.environment}* on *#{servername}*"
+      else
+        top_message = "#{status_icon} *#{self.host}* at #{Time.now.asctime}\nEnvironment *#{self.environment}* on *#{servername}*"
+      end
+
       total_time = ''
+
       self.metrics.each { |metric, data|
           path = ['puppet', metric]
           data.values.each { |name, _, value|
@@ -63,21 +53,58 @@ Puppet::Reports.register_report(:slack) do
         }
 
       message = [
-        message,
-        " ",
-        total_time
-      ].flatten.join("\n")
+        {
+          "type" => "section",
+          "text" => {
+            "type" => "mrkdwn",
+            "text" => "#{top_message}"
+          }
+        },
+        {
+          "type" => "divider"
+        }
+      ]
+
+      # Collect failed or changed resources
+      self.resource_statuses.each do | resource, resource_data |
+        if config[:slack_statuses].include?('changed')
+          if resource_data.changed == true && resource_data.events.first
+            message.push({"type" => "section","text" => {"type" => "mrkdwn", "text" =>"*#{resource}*\n#{resource_data.events.first.message}"}})
+          end
+        elsif config[:slack_statuses].include?('failed')
+          if resource_data.failed == true && resource_data.events.first
+            message.push({"type" => "section","text" => {"type" => "mrkdwn", "text" =>"*#{resource}*\n#{resource_data.events.first.message}"}})
+          end
+        end
+      end
 
       Puppet.info "Sending status for #{self.host} to Slack."
 
-      uri = URI.parse(config[:slack_url])
-      http = Net::HTTP.new(uri.host, uri.port)
-      # http.set_debug_output($stdout)
-      http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      request = Net::HTTP::Post.new(uri.path)
-      request.body = "payload=" + compose(config, message)
-      response = http.request(request)
+      message = {
+        :channel => config[:slack_channel],
+        :blocks => message
+      }
+
+      open('/tmp/blockmessage', 'a') { |f|
+        f.puts JSON.dump(message)
+      }
+
+      begin
+        encoded_url = URI.encode(config[:slack_webhook])
+        uri = URI.parse(encoded_url)
+        req = Net::HTTP::Post.new uri.path
+        req.body = JSON.dump(message)
+
+        res = Net::HTTP.start(uri.host, uri.port, :use_ssl => true) do |http|
+          http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+          http.ssl_version = :SSLv3
+          http.request req
+        end
+      rescue
+        Puppet.info "Failed to deliver payload to Slack endpoint"
+        Puppet.info message
+      end
+
     end
   end
 end

@@ -61,7 +61,7 @@ Optional base URL of a puppetboard for your nodes. Makes the hostname in the rep
 
 #####`slack_statuses`
 
-Which events do you want sent to the Slack channel
+Which events do you want sent to the Slack channel - failed, changed, unchanged
 
 ## Screenshot
 

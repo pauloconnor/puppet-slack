@@ -4,3 +4,4 @@
 :slack_botname: '<%= @slack_botname %>'
 :slack_iconurl: '<%= @slack_iconurl %>'
 :slack_statuses: ['<%= @slack_statuses.join("', '") %>']
+<%- if @ca_server -%>:ca_server: '<%= @ca_server %>'<%- end -%>

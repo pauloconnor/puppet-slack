@@ -1,12 +1,11 @@
 # Report processor integration with Slack.com
 class slack (
   $slack_webhook        = undef,
-  $slack_iconurl        = 'http://puppetlabs.com/wp-content/uploads/2010/12/PL_logo_vertical_RGB_lg.png',
   $slack_channel        = '#puppet',
-  $slack_botname        = 'puppet',
   $slack_puppet_reports = undef,
   $slack_puppet_dir     = '/etc/puppet',
   $slack_statuses       = ['changed', 'failed', 'unchanged']
+  $ca_server            = undef,
 ) {
 
   anchor {'slack::begin':}
@@ -29,6 +28,13 @@ class slack (
       before  => Anchor['slack::end'],
     }
   }
+
+  # There's a bug in Puppet 5 that requires this
+  file { '/opt/puppetlabs/puppet/lib/ruby/vendor_ruby/puppet/reports/slack.rb':
+    ensure => 'link',
+    target => '/opt/puppetlabs/puppet/cache/lib/puppet/reports/slack.rb',
+  }
+
   anchor{'slack::end':
     require => File["${slack_puppet_dir}/slack.yaml"],
   }

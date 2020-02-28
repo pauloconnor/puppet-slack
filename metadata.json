@@ -22,9 +22,5 @@
       "version_requirement": "3.x" }
   ],
   "dependencies": [
-    {
-      "name": "landcareresearch/check_run",
-      "version_requirement": ">= 0.2.3"
-    }
   ]
 }

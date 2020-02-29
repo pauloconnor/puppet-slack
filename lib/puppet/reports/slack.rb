@@ -85,10 +85,6 @@ Puppet::Reports.register_report(:slack) do
         :blocks => message
       }
 
-      open('/tmp/blockmessage', 'a') { |f|
-        f.puts JSON.dump(message)
-      }
-
       begin
         encoded_url = URI.encode(config[:slack_webhook])
         uri = URI.parse(encoded_url)

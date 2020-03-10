@@ -29,11 +29,20 @@ Puppet::Reports.register_report(:slack) do
     if config[:slack_statuses].include?(self.status)
       # We don't have the socket gem available to us
       servername = Socket.gethostbyname(Socket.gethostname).first
+
+      hostname = self.host
+      # If our certname is our instance id, pull the fqdn from one of the report files
+      if hostname.start_with?('i-')
+        filename = Dir.glob("/opt/puppetlabs/server/data/puppetserver/yaml/facts/#{hostname}.yaml").max_by {|f| File.mtime(f)}
+        yaml_data = YAML.load(File.read(filename).gsub(/---.*/, '---'))
+        hostname = yaml_data['values']['networking']['fqdn']
+      end
+
       # construct message
       if config[:slack_puppetboard_url]
-        top_message = "#{status_icon} *<#{config[:slack_puppetboard_url]}/node/#{self.host}|#{self.host}>* at #{Time.now.asctime}\nEnvironment *#{self.environment}* on *#{servername}*"
+        top_message = "#{status_icon} *<#{config[:slack_puppetboard_url]}/node/#{self.host}|#{hostname}>* at #{Time.now.asctime}\nEnvironment *#{self.environment}* on *#{servername}*"
       else
-        top_message = "#{status_icon} *#{self.host}* at #{Time.now.asctime}\nEnvironment *#{self.environment}* on *#{servername}*"
+        top_message = "#{status_icon} *#{hostname}* at #{Time.now.asctime}\nEnvironment *#{self.environment}* on *#{servername}*"
       end
 
       total_time = ''
@@ -78,7 +87,7 @@ Puppet::Reports.register_report(:slack) do
         end
       end
 
-      Puppet.info "Sending status for #{self.host} to Slack."
+      Puppet.info "Sending status for #{hostname} to Slack."
 
       message = {
         :channel => config[:slack_channel],
